@@ -17,11 +17,11 @@ func NewRouter(cfg *config.Config, db *gorm.DB, redisClient *redis.Client, kafka
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
-	api_prefix := router.Group("/api/v1")
-	public_api := api_prefix.Group("public")
-	private_api := api_prefix.Group("private")
-	private_api.Use(middleware.Auth([]byte(cfg.JWT.Secret)))
-	if err := newUserHandler(public_api, private_api, db, cfg, redisClient, kafkaWriter); err != nil {
+	api := router.Group("/api/v1")
+	public := api.Group("")
+	private := api.Group("")
+	private.Use(middleware.Auth([]byte(cfg.JWT.Secret)))
+	if err := newUserHandler(public, private, db, cfg, redisClient, kafkaWriter, registerUserRoute, registerLoginRoute); err != nil {
 		return nil, err
 	}
 

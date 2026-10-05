@@ -21,7 +21,7 @@ func NewUserHandler(userService *services.UserService, jwtSecret []byte, jwtExpi
 	jwtTTL, err := time.ParseDuration(jwtExpire)
 	if err != nil {
 		return nil, fmt.Errorf("parse jwt.expire: %w", err)
-	}
+	}        
 
 	return &UserHandler{
 		userService: userService,
