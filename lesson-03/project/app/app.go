@@ -6,13 +6,12 @@ import (
 	"manage-system/clients"
 	"manage-system/config"
 	"manage-system/database"
-	"manage-system/handlers"
 	"manage-system/httpserver"
 	"manage-system/models"
-	"manage-system/services"
-	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
+	"github.com/segmentio/kafka-go"
 )
 
 func Run() error {
@@ -35,33 +34,25 @@ func Run() error {
 		return fmt.Errorf("migrate database: %w", err)
 	}
 
-	userService := services.NewUserService(db)
+	var redisClient *redis.Client
 	if cfg.Redis.Enabled {
-		redisClient, err := clients.NewRedisClient(cfg.Redis)
+		redisClient, err = clients.NewRedisClient(cfg.Redis)
 		if err != nil {
 			return fmt.Errorf("initialize Redis: %w", err)
 		}
 		defer closeRedis(redisClient)
-
-		cacheTTL, err := time.ParseDuration(cfg.Redis.CacheTTL)
-		if err != nil {
-			return fmt.Errorf("parse redis.cache_ttl: %w", err)
-		}
-		userService.SetCache(redisClient, cacheTTL)
 	}
 
+	var writer *kafka.Writer
 	if cfg.Kafka.Enabled {
-		writer := clients.NewKafkaWriter(cfg.Kafka)
+		writer = clients.NewKafkaWriter(cfg.Kafka)
 		defer closeKafka(writer)
-		userService.SetKafkaWriter(writer)
 	}
 
-	jwtTTL, err := time.ParseDuration(cfg.JWT.Expire)
+	router, err := httpserver.NewRouter(cfg, db, redisClient, writer)
 	if err != nil {
-		return fmt.Errorf("parse jwt.expire: %w", err)
+		return fmt.Errorf("create HTTP router: %w", err)
 	}
-	userHandler := handlers.NewUserHandler(userService, []byte(cfg.JWT.Secret), jwtTTL)
-	router := httpserver.NewRouter([]byte(cfg.JWT.Secret), userHandler)
 	addr := cfg.Server.Host + ":" + cfg.Server.Port
 	slog.Info("server started", "address", addr)
 	if err := router.Run(addr); err != nil {

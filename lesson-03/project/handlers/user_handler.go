@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"manage-system/models"
 	"manage-system/services"
 	"manage-system/utils"
@@ -16,12 +17,17 @@ type UserHandler struct {
 	jwtTTL      time.Duration
 }
 
-func NewUserHandler(userService *services.UserService, jwtSecret []byte, jwtTTL time.Duration) *UserHandler {
+func NewUserHandler(userService *services.UserService, jwtSecret []byte, jwtExpire string) (*UserHandler, error) {
+	jwtTTL, err := time.ParseDuration(jwtExpire)
+	if err != nil {
+		return nil, fmt.Errorf("parse jwt.expire: %w", err)
+	}
+
 	return &UserHandler{
 		userService: userService,
 		jwtSecret:   jwtSecret,
 		jwtTTL:      jwtTTL,
-	}
+	}, nil
 }
 
 // Register a new user
