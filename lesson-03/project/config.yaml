@@ -1,0 +1,27 @@
+server:
+  host: 127.0.0.1
+  port: "8080"
+  mode: debug
+
+database:
+  driver: sqlite
+  dsn: users.db
+  # MySQL: user:password@tcp(127.0.0.1:3306)/manage_system?charset=utf8mb4&parseTime=True&loc=Local
+  # PostgreSQL: host=127.0.0.1 user=postgres password=password dbname=manage_system port=5432 sslmode=disable TimeZone=UTC
+
+jwt:
+  secret: change-this-secret-in-production
+  expire: 24h
+
+redis:
+  enabled: false
+  addr: 127.0.0.1:6379
+  password: ""
+  db: 0
+  cache_ttl: 5m
+
+kafka:
+  enabled: false
+  brokers:
+    - 127.0.0.1:9092
+  topic: user.registered

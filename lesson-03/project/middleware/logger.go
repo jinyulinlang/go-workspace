@@ -1,7 +1,8 @@
 package middleware
 
 import (
-	"fmt"
+	"log/slog"
+	"manage-system/utils"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -16,6 +17,14 @@ func Logger() gin.HandlerFunc {
 		c.Next()
 		latency := time.Since(start)
 		status := c.Writer.Status()
-		fmt.Printf("[%s] %s %d %v\n", method, path, status, latency)
+		traceID, spanID := utils.TraceIDs(c.Request.Context())
+		slog.InfoContext(c.Request.Context(), "http request completed",
+			"trace_id", traceID,
+			"span_id", spanID,
+			"method", method,
+			"path", path,
+			"status", status,
+			"latency_ms", float64(latency)/float64(time.Millisecond),
+		)
 	}
 }

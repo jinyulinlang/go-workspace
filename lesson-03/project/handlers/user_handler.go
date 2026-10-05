@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"log"
 	"manage-system/models"
 	"manage-system/services"
 	"manage-system/utils"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,12 +13,14 @@ import (
 type UserHandler struct {
 	userService *services.UserService
 	jwtSecret   []byte
+	jwtTTL      time.Duration
 }
 
-func NewUserHandler(userService *services.UserService, jwtSecret []byte) *UserHandler {
+func NewUserHandler(userService *services.UserService, jwtSecret []byte, jwtTTL time.Duration) *UserHandler {
 	return &UserHandler{
 		userService: userService,
 		jwtSecret:   jwtSecret,
+		jwtTTL:      jwtTTL,
 	}
 }
 
@@ -29,7 +31,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 		utils.Error(c, http.StatusBadRequest, "Invalid request1")
 		return
 	}
-	user, err := h.userService.CreateUser(req)
+	user, err := h.userService.CreateUser(c.Request.Context(), req)
 	if err != nil {
 		utils.HandleError(c, err)
 		return
@@ -50,13 +52,13 @@ func (h *UserHandler) Login(c *gin.Context) {
 		utils.Error(c, http.StatusBadRequest, "Invalid request")
 		return
 	}
-	user, err := h.userService.Authenticate(req.Username, req.Password)
+	user, err := h.userService.Authenticate(c.Request.Context(), req.Username, req.Password)
 	if err != nil {
 		utils.HandleError(c, err)
 		return
 	}
-	log.Println("generate the token")
-	token, err := utils.GenerateToken(h.jwtSecret, user.ID, user.Username)
+	utils.LogWithTrace(c.Request.Context(), "generating authentication token")
+	token, err := utils.GenerateToken(h.jwtSecret, user.ID, user.Username, h.jwtTTL)
 	if err != nil {
 		utils.HandleError(c, err)
 		return
@@ -81,7 +83,7 @@ func (h *UserHandler) GetProfile(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userService.GetUserByID(userID.(uint))
+	user, err := h.userService.GetUserByID(c.Request.Context(), userID.(uint))
 	if err != nil {
 		utils.HandleError(c, err)
 		return
@@ -106,7 +108,7 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 		utils.ValidationError(c, parseValidationErrors(err))
 		return
 	}
-	user, err := h.userService.UpdateUser(userID.(uint), req)
+	user, err := h.userService.UpdateUser(c.Request.Context(), userID.(uint), req)
 	if err != nil {
 		utils.HandleError(c, err)
 		return

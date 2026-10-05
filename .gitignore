@@ -1,0 +1,49 @@
+# Go build artifacts
+/bin/
+/build/
+/dist/
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+coverage.out
+coverage.html
+*.coverprofile
+*.prof
+*.pprof
+*.trace
+
+# Local databases and SQLite sidecar files
+*.db
+*.sqlite
+*.sqlite3
+*-journal
+*-wal
+*-shm
+
+# Local secrets and environment overrides
+.env
+.env.*
+!.env.example
+!.env.*.example
+config.local.yaml
+config.local.yml
+config.*.local.yaml
+config.*.local.yml
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
+*.tmp
+*.swp
+*.swo
+*~
+
+# macOS and IDE files
+.DS_Store
+.AppleDouble
+.LSOverride
+.idea/

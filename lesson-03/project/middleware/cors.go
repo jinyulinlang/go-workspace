@@ -13,7 +13,8 @@ func CORS() gin.HandlerFunc {
 		if origin != "" {
 			c.Header("Access-Control-Allow-Origin", origin)
 			c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-			c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Trace-ID")
+			c.Header("Access-Control-Expose-Headers", "X-Trace-ID, X-Span-ID")
 			c.Header("Access-Control-Allow-Credentials", "true")
 		}
 
