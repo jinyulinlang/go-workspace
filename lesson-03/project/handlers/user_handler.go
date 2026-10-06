@@ -6,6 +6,7 @@ import (
 	"manage-system/services"
 	"manage-system/utils"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -21,7 +22,7 @@ func NewUserHandler(userService *services.UserService, jwtSecret []byte, jwtExpi
 	jwtTTL, err := time.ParseDuration(jwtExpire)
 	if err != nil {
 		return nil, fmt.Errorf("parse jwt.expire: %w", err)
-	}        
+	}
 
 	return &UserHandler{
 		userService: userService,
@@ -46,6 +47,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 		ID:       user.ID,
 		Username: user.Username,
 		Email:    user.Email,
+		PostNo:   user.PostNo,
 	})
 
 }
@@ -76,7 +78,9 @@ func (h *UserHandler) Login(c *gin.Context) {
 			ID:        user.ID,
 			Username:  user.Username,
 			Email:     user.Email,
-			CreatedAt: user.CreatedAt},
+			PostNo:    user.PostNo,
+			CreatedAt: user.CreatedAt,
+		},
 	})
 }
 
@@ -98,6 +102,7 @@ func (h *UserHandler) GetProfile(c *gin.Context) {
 		ID:        user.ID,
 		Username:  user.Username,
 		Email:     user.Email,
+		PostNo:    user.PostNo,
 		CreatedAt: user.CreatedAt,
 	})
 }
@@ -123,9 +128,39 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 		ID:        user.ID,
 		Username:  user.Username,
 		Email:     user.Email,
+		PostNo:    user.PostNo,
 		CreatedAt: user.CreatedAt,
 	})
 }
+
+func (h *UserHandler) GetUserPostRank(c *gin.Context) {
+	limit := 10
+	if raw := c.Query("limit"); raw != "" {
+		if parsed, err := strconv.Atoi(raw); err == nil && parsed > 0 {
+			limit = parsed
+		}
+	}
+
+	users, err := h.userService.GetUserPostRank(limit)
+	if err != nil {
+		utils.HandleError(c, err)
+		return
+	}
+
+	responses := make([]models.UserResponse, 0, len(users))
+	for _, user := range users {
+		responses = append(responses, models.UserResponse{
+			ID:        user.ID,
+			Username:  user.Username,
+			Email:     user.Email,
+			PostNo:    user.PostNo,
+			CreatedAt: user.CreatedAt,
+		})
+	}
+
+	utils.Success(c, responses)
+}
+
 func parseValidationErrors(err error) map[string]string {
 	errors := make(map[string]string)
 	// simpify the error message

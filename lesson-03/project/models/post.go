@@ -14,6 +14,28 @@ type Post struct {
 	User    User   `json:"user" gorm:"foreignKey:UserID"`
 }
 
+func (p *Post) AfterCreate(tx *gorm.DB) error {
+	if p.UserID == 0 {
+		return nil
+	}
+
+	return tx.Model(&User{}).
+		Where("id = ?", p.UserID).
+		UpdateColumn("post_no", gorm.Expr("post_no + ?", 1)).
+		Error
+}
+
+func (p *Post) AfterDelete(tx *gorm.DB) error {
+	if p.UserID == 0 {
+		return nil
+	}
+
+	return tx.Model(&User{}).
+		Where("id = ?", p.UserID).
+		UpdateColumn("post_no", gorm.Expr("post_no - ?", 1)).
+		Error
+}
+
 type CreatePostRequest struct {
 	Title   string `json:"title" binding:"required"`
 	Content string `json:"content" binding:"required"`
@@ -32,6 +54,7 @@ type PostResponse struct {
 	User      User      `json:"user"`
 	Comments  []Comment `json:"comments"`
 	CreatedAt time.Time `json:"created_at"`
+	Status    string    `json:"status"`
 }
 
 type PostPageResponse struct {

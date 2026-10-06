@@ -34,6 +34,32 @@ func (h *CommentHandler) CreateComment(c *gin.Context) {
 	}
 
 }
+func (h *CommentHandler) GetMaxCommentPost(c *gin.Context) {
+	post, err := h.commentService.GetMaxCommentPost()
+	if err != nil {
+		utils.HandleError(c, err)
+		return
+	}
+	comments, total, err := h.commentService.GetCommentsByPostID(1, 10, post.ID)
+	if err != nil {
+		utils.HandleError(c, err)
+		return
+	}
+	pr := models.PostResponse{
+		ID:        post.ID,
+		Title:     post.Title,
+		Content:   post.Content,
+		CreatedAt: post.CreatedAt,
+		Comments:  comments,
+	}
+	ppr := models.PostPageResponse{
+		Posts: pr,
+		Total: total,
+	}
+
+	utils.Success(c, ppr)
+
+}
 func (h *CommentHandler) DeleteComment(c *gin.Context) {
 	var ids []uint
 	if err := c.ShouldBindJSON(&ids); err != nil {

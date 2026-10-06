@@ -57,7 +57,7 @@ func (s *UserService) CreateUser(ctx context.Context, req models.CreateUserReque
 	}
 	if s.kafkaWriter != nil {
 		payload, err := json.Marshal(models.UserResponse{
-			ID: user.ID, Username: user.Username, Email: user.Email, CreatedAt: user.CreatedAt,
+			ID: user.ID, Username: user.Username, Email: user.Email, PostNo: user.PostNo, CreatedAt: user.CreatedAt,
 		})
 		if err == nil {
 			publishContext, cancel := context.WithTimeout(ctx, 3*time.Second)
@@ -145,4 +145,16 @@ func (s *UserService) UpdateUser(ctx context.Context, id uint, req models.Update
 	}
 
 	return user, nil
+}
+
+func (s *UserService) GetUserPostRank(limit int) ([]models.User, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+
+	var users []models.User
+	if err := s.db.Order("post_no DESC").Limit(limit).Find(&users).Error; err != nil {
+		return nil, utils.NewAppError(500, "Failed to get user post rank")
+	}
+	return users, nil
 }

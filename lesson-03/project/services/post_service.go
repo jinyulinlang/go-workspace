@@ -27,6 +27,15 @@ func (p *PostService) CreatePost(userId uint, ctx context.Context, req *models.C
 	if err := p.db.Create(post).Error; err != nil {
 		return utils.NewAppError(500, "Failed to create post")
 	}
+	var user models.User
+	if err := p.db.Model(&models.User{}).Where("id =?", userId).Find(&user).Error; err != nil {
+		return utils.NewAppError(500, "Failed to get user")
+	}
+	// todo feel add a optimistic lock
+	if err := p.db.Model(&models.User{}).Where("id =?", userId).Update("post_no", user.PostNo+1).Error; err != nil {
+		return utils.NewAppError(500, "Failed to update user")
+	}
+
 	return nil
 }
 func (p *PostService) UpdatePost(post *models.Post) error {
@@ -35,12 +44,20 @@ func (p *PostService) UpdatePost(post *models.Post) error {
 	}
 	return nil
 }
-func (p *PostService) DeletePost(ids []uint) error {
+func (p *PostService) DeletePost(userId uint, ids []uint) error {
 	if len(ids) == 0 {
 		return utils.NewAppError(400, "No post IDs provided")
 	}
 	if err := p.db.Where("id IN ?", ids).Delete(&models.Post{}).Error; err != nil {
 		return utils.NewAppError(500, "Failed to delete post")
+	}
+	var user models.User
+	if err := p.db.Model(&models.User{}).Where("id =?", userId).Find(&user).Error; err != nil {
+		return utils.NewAppError(500, "Failed to get user")
+	}
+	// todo feel add a optimistic lock
+	if err := p.db.Model(&models.User{}).Where("id =?", userId).Update("post_no", user.PostNo-len(ids)).Error; err != nil {
+		return utils.NewAppError(500, "Failed to update user")
 	}
 	return nil
 }

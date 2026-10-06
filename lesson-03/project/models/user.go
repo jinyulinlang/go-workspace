@@ -12,6 +12,7 @@ type User struct {
 	Username string `json:"username" gorm:"uniqueIndex;not null;size:255"`
 	Email    string `json:"email" gorm:"uniqueIndex;not null;size:255"`
 	Password string `json:"-" gorm:"not null;size:255"`
+	PostNo   int    `json:"post_no" gorm:"default:0"`
 }
 
 type CreateUserRequest struct {
@@ -33,5 +34,6 @@ type UserResponse struct {
 	ID        uint      `json:"id"`
 	Username  string    `json:"username"`
 	Email     string    `json:"email"`
+	PostNo    int       `json:"post_no"`
 	CreatedAt time.Time `json:"created_at"`
 }

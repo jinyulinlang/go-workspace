@@ -45,6 +45,7 @@ func newUserHandler(public_api *gin.RouterGroup, private_api *gin.RouterGroup, d
 
 	private_api.GET("/users/me", userHandler.GetProfile)
 	private_api.PUT("/users/me", userHandler.UpdateProfile)
+	private_api.GET("/users/post-rank", userHandler.GetUserPostRank)
 
 	return nil
 }

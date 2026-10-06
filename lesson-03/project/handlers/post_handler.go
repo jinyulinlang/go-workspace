@@ -67,6 +67,10 @@ func (h *PostHandler) GetPostByID(c *gin.Context) {
 		utils.HandleError(c, err)
 		return
 	}
+	status := "暂无评论"
+	if len(comments) != 0 {
+		status = string("有" + strconv.Itoa(len(comments)) + "条评论")
+	}
 	pr := models.PostResponse{
 		ID:        post.ID,
 		Title:     post.Title,
@@ -74,6 +78,7 @@ func (h *PostHandler) GetPostByID(c *gin.Context) {
 		CreatedAt: post.CreatedAt,
 		Comments:  comments,
 		User:      post.User,
+		Status:    status,
 	}
 
 	utils.Success(c, pr)
@@ -142,7 +147,7 @@ func (h *PostHandler) DeleteByIds(c *gin.Context) {
 		}
 	}
 
-	if err := h.postService.DeletePost(ids); err != nil {
+	if err := h.postService.DeletePost(id, ids); err != nil {
 		utils.HandleError(c, err)
 		return
 	}

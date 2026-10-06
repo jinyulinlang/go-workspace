@@ -22,4 +22,5 @@ func RegisterCommentRoutes(router *gin.RouterGroup, commentHandler *handlers.Com
 	router.POST("/comments", commentHandler.CreateComment)
 	router.GET("/posts/:id/comments", commentHandler.GetCommentsByPostID)
 	router.DELETE("/comments", commentHandler.DeleteComment)
+	router.GET("/comments/max/post", commentHandler.GetMaxCommentPost)
 }
