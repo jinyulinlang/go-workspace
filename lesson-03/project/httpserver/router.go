@@ -24,6 +24,12 @@ func NewRouter(cfg *config.Config, db *gorm.DB, redisClient *redis.Client, kafka
 	if err := newUserHandler(public, private, db, cfg, redisClient, kafkaWriter, registerUserRoute, registerLoginRoute); err != nil {
 		return nil, err
 	}
+	if err := newPostHandler(private, db); err != nil {
+		return nil, err
+	}
+	if err := newCommentHandler(private, db); err != nil {
+		return nil, err
+	}
 
 	return router, nil
 }

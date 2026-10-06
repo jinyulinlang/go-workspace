@@ -8,13 +8,10 @@ import (
 
 type User struct {
 	gorm.Model
-	ID        uint           `json:"id" gorm:"primaryKey"`
-	Username  string         `json:"username" gorm:"uniqueIndex;not null;size:255"`
-	Email     string         `json:"email" gorm:"uniqueIndex;not null;size:255"`
-	Password  string         `json:"-" gorm:"not null;size:255"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	DeleteAt  gorm.DeletedAt `json:"-" gorm:"index"`
+	ID       uint   `json:"id" gorm:"primaryKey"`
+	Username string `json:"username" gorm:"uniqueIndex;not null;size:255"`
+	Email    string `json:"email" gorm:"uniqueIndex;not null;size:255"`
+	Password string `json:"-" gorm:"not null;size:255"`
 }
 
 type CreateUserRequest struct {
