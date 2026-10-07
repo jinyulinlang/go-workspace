@@ -20,7 +20,7 @@ func (c *CommentService) CreateComment(userId uint, req *models.CreateCommentReq
 	comment.UserID = userId
 	comment.Content = req.Content
 	comment.PostID = req.PostID
-	if err := c.db.Create(comment).Error; err != nil {
+	if err := c.db.Create(&comment).Error; err != nil {
 		return utils.NewAppError(500, "Failed to create comment")
 	}
 	return nil
@@ -85,6 +85,8 @@ func (s *CommentService) GetCommentsByPostID(
 	}
 
 	if err := s.db.Where("post_id = ?", postId).
+		Preload("User").
+		Preload("Post").
 		Offset((pageNo - 1) * pageSize).
 		Limit(pageSize).
 		Find(&comments).Error; err != nil {

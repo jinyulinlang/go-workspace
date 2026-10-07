@@ -77,8 +77,14 @@ func (h *PostHandler) GetPostByID(c *gin.Context) {
 		Content:   post.Content,
 		CreatedAt: post.CreatedAt,
 		Comments:  comments,
-		User:      post.User,
-		Status:    status,
+		User: models.UserResponse{
+			ID:        post.UserID,
+			Username:  post.User.Username,
+			Email:     post.User.Email,
+			PostNo:    post.User.PostNo,
+			CreatedAt: post.User.CreatedAt,
+		},
+		Status: status,
 	}
 
 	utils.Success(c, pr)
@@ -94,12 +100,24 @@ func (h *PostHandler) UpdatePost(c *gin.Context) {
 		utils.Error(c, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
+	postId, ok := c.Params.Get("id")
+	if !ok {
+		utils.Error(c, http.StatusUnauthorized, "postId can not empty")
+		return
+	}
 	var req models.UpdatePostRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.Error(c, http.StatusBadRequest, "Invalid request")
 		return
 	}
-	post, err := h.postService.GetPostByID(req.ID)
+	// postId cast to int
+	pid, err := strconv.Atoi(postId)
+	if err != nil {
+		utils.HandleError(c, err)
+		return
+	}
+
+	post, err := h.postService.GetPostByID(uint(pid))
 	if err != nil {
 		utils.HandleError(c, err)
 		return
@@ -120,8 +138,8 @@ func (h *PostHandler) UpdatePost(c *gin.Context) {
 }
 
 func (h *PostHandler) DeleteByIds(c *gin.Context) {
-	var ids []uint
-	if err := c.ShouldBindJSON(&ids); err != nil {
+	var req models.DeletePostRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ValidationError(c, parseValidationErrors(err))
 		return
 	}
@@ -135,7 +153,7 @@ func (h *PostHandler) DeleteByIds(c *gin.Context) {
 		utils.Error(c, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
-	for _, postId := range ids {
+	for _, postId := range req.IDS {
 		post, err := h.postService.GetPostByID(postId)
 		if err != nil {
 			utils.HandleError(c, err)
@@ -147,7 +165,7 @@ func (h *PostHandler) DeleteByIds(c *gin.Context) {
 		}
 	}
 
-	if err := h.postService.DeletePost(id, ids); err != nil {
+	if err := h.postService.DeletePost(id, req.IDS); err != nil {
 		utils.HandleError(c, err)
 		return
 	}

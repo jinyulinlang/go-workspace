@@ -30,7 +30,8 @@ func Run() error {
 		return fmt.Errorf("get database connection: %w", err)
 	}
 	defer closeDatabase(sqlDB)
-	if err := db.AutoMigrate(&models.User{}); err != nil {
+	// init the tables
+	if err := db.AutoMigrate(&models.User{}, &models.Comment{}, &models.Post{}); err != nil {
 		return fmt.Errorf("migrate database: %w", err)
 	}
 

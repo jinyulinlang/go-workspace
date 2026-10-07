@@ -5,6 +5,7 @@ import (
 	"manage-system/services"
 	"manage-system/utils"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -45,12 +46,25 @@ func (h *CommentHandler) GetMaxCommentPost(c *gin.Context) {
 		utils.HandleError(c, err)
 		return
 	}
-	pr := models.PostResponse{
+	maxComments := make([]models.CommentMaxResponse, len(comments))
+	for i, comment := range comments {
+		maxComments[i] = models.CommentMaxResponse{
+			ID:        comment.ID,
+			Content:   comment.Content,
+			CreatedAt: comment.CreatedAt,
+		}
+	}
+	status := "暂无评论"
+	if len(comments) > 0 {
+		status = "评论数:" + strconv.Itoa(len(comments))
+	}
+	pr := models.PostMaxResponse{
 		ID:        post.ID,
 		Title:     post.Title,
 		Content:   post.Content,
 		CreatedAt: post.CreatedAt,
-		Comments:  comments,
+		Comments:  maxComments,
+		Status:    status,
 	}
 	ppr := models.PostPageResponse{
 		Posts: pr,
@@ -61,12 +75,12 @@ func (h *CommentHandler) GetMaxCommentPost(c *gin.Context) {
 
 }
 func (h *CommentHandler) DeleteComment(c *gin.Context) {
-	var ids []uint
-	if err := c.ShouldBindJSON(&ids); err != nil {
+	var req models.DeleteCommentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ValidationError(c, parseValidationErrors(err))
 		return
 	}
-	if err := h.commentService.DeleteComment(ids); err != nil {
+	if err := h.commentService.DeleteComment(req.IDS); err != nil {
 		utils.HandleError(c, err)
 		return
 	}
@@ -79,7 +93,18 @@ func (h *CommentHandler) GetCommentsByPostID(c *gin.Context) {
 		utils.ValidationError(c, parseValidationErrors(err))
 		return
 	}
-	comments, total, err := h.commentService.GetCommentsByPostID(req.PageNo, req.PageSize, req.PostID)
+	postIDText, ok := c.Params.Get("postId")
+	if !ok {
+		utils.Error(c, http.StatusBadRequest, "Invalid post ID")
+		return
+	}
+	postID, err := strconv.Atoi(postIDText)
+	if err != nil || postID <= 0 {
+		utils.Error(c, http.StatusBadRequest, "Invalid post ID")
+		return
+	}
+
+	comments, total, err := h.commentService.GetCommentsByPostID(req.PageNo, req.PageSize, uint(postID))
 	if err != nil {
 		utils.HandleError(c, err)
 		return
@@ -88,10 +113,20 @@ func (h *CommentHandler) GetCommentsByPostID(c *gin.Context) {
 
 	for i, comment := range comments {
 		comentResponses[i] = models.CommentResponse{
-			ID:        comment.ID,
-			Content:   comment.Content,
-			User:      comment.User,
-			Post:      comment.Post,
+			ID:      comment.ID,
+			Content: comment.Content,
+			Post: models.PostResponse{
+				ID:      comment.Post.ID,
+				Content: comment.Post.Content,
+				Title:   comment.Post.Title,
+				User: models.UserResponse{
+					ID:        comment.User.ID,
+					Username:  comment.User.Username,
+					Email:     comment.User.Email,
+					PostNo:    comment.User.PostNo,
+					CreatedAt: comment.User.CreatedAt,
+				},
+			},
 			CreatedAt: comment.CreatedAt,
 		}
 	}

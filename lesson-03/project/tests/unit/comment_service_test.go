@@ -53,3 +53,41 @@ func TestGetMaxCommentPost(t *testing.T) {
 		t.Fatalf("post.Title = %q, want %q", post.Title, "post-2")
 	}
 }
+
+func TestGetCommentsByPostIDPreloadsAssociations(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("open sqlite: %v", err)
+	}
+	if err := db.AutoMigrate(&models.User{}, &models.Post{}, &models.Comment{}); err != nil {
+		t.Fatalf("migrate tables: %v", err)
+	}
+
+	user := models.User{Username: "commenter", Email: "commenter@example.com", Password: "password"}
+	if err := db.Create(&user).Error; err != nil {
+		t.Fatalf("seed user: %v", err)
+	}
+	post := models.Post{Title: "post-1", Content: "first post", UserID: user.ID}
+	if err := db.Create(&post).Error; err != nil {
+		t.Fatalf("seed post: %v", err)
+	}
+	comment := models.Comment{Content: "hello", UserID: user.ID, PostID: post.ID}
+	if err := db.Create(&comment).Error; err != nil {
+		t.Fatalf("seed comment: %v", err)
+	}
+
+	service := services.NewCommentService(db)
+	comments, total, err := service.GetCommentsByPostID(1, 10, post.ID)
+	if err != nil {
+		t.Fatalf("GetCommentsByPostID returned error: %v", err)
+	}
+	if total != 1 || len(comments) != 1 {
+		t.Fatalf("got total=%d and %d comments, want 1", total, len(comments))
+	}
+	if comments[0].User.ID != user.ID || comments[0].User.Username != user.Username {
+		t.Errorf("comment user = %+v, want user ID %d", comments[0].User, user.ID)
+	}
+	if comments[0].Post.ID != post.ID || comments[0].Post.Title != post.Title {
+		t.Errorf("comment post = %+v, want post ID %d", comments[0].Post, post.ID)
+	}
+}

@@ -21,14 +21,23 @@ type CreateCommentRequest struct {
 }
 
 type CommentQueryRequest struct {
-	PostID   uint `json:"post_id" binding:"required"`
-	PageNo   int  `json:"page_no" binding:"required"`
-	PageSize int  `json:"page_size" binding:"required"`
+	// PostID   uint `json:"post_id" binding:"required"`
+	PageNo   int `json:"page_no" binding:"required"`
+	PageSize int `json:"page_size" binding:"required"`
 }
 type CommentResponse struct {
+	ID        uint         `json:"id"`
+	Content   string       `json:"content"`
+	Post      PostResponse `json:"post"`
+	CreatedAt time.Time    `json:"created_at"`
+}
+
+type CommentMaxResponse struct {
 	ID        uint      `json:"id"`
 	Content   string    `json:"content"`
-	User      User      `json:"user"`
-	Post      Post      `json:"post"`
 	CreatedAt time.Time `json:"created_at"`
+}
+
+type DeleteCommentRequest struct {
+	IDS []uint `json:"ids"`
 }

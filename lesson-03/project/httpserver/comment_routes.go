@@ -20,7 +20,7 @@ func newCommentHandler(router *gin.RouterGroup, db *gorm.DB) error {
 
 func RegisterCommentRoutes(router *gin.RouterGroup, commentHandler *handlers.CommentHandler) {
 	router.POST("/comments", commentHandler.CreateComment)
-	router.GET("/posts/:id/comments", commentHandler.GetCommentsByPostID)
+	router.GET("/comments/:postId/posts", commentHandler.GetCommentsByPostID)
 	router.DELETE("/comments", commentHandler.DeleteComment)
-	router.GET("/comments/max/post", commentHandler.GetMaxCommentPost)
+	router.GET("/comments/max/posts", commentHandler.GetMaxCommentPost)
 }

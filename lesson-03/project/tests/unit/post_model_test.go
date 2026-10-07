@@ -16,7 +16,7 @@ func TestPostAfterCreateIncrementsUserPostNo(t *testing.T) {
 		t.Fatalf("open sqlite: %v", err)
 	}
 
-	if err := db.AutoMigrate(&models.User{}, &models.Post{}); err != nil {
+	if err := db.AutoMigrate(&models.User{}, &models.Post{}, &models.Comment{}); err != nil {
 		t.Fatalf("migrate tables: %v", err)
 	}
 
@@ -53,7 +53,7 @@ func TestPostAfterDeleteDecrementsUserPostNo(t *testing.T) {
 		t.Fatalf("open sqlite: %v", err)
 	}
 
-	if err := db.AutoMigrate(&models.User{}, &models.Post{}); err != nil {
+	if err := db.AutoMigrate(&models.User{}, &models.Post{}, &models.Comment{}); err != nil {
 		t.Fatalf("migrate tables: %v", err)
 	}
 
@@ -66,8 +66,20 @@ func TestPostAfterDeleteDecrementsUserPostNo(t *testing.T) {
 	if err := db.Create(&post).Error; err != nil {
 		t.Fatalf("create post: %v", err)
 	}
+	comment := models.Comment{Content: "hello", UserID: user.ID, PostID: post.ID}
+	if err := db.Create(&comment).Error; err != nil {
+		t.Fatalf("create comment: %v", err)
+	}
 	if err := db.Delete(&post).Error; err != nil {
 		t.Fatalf("delete post: %v", err)
+	}
+
+	var comments []models.Comment
+	if err := db.Where("post_id = ?", post.ID).Find(&comments).Error; err != nil {
+		t.Fatalf("query deleted comments: %v", err)
+	}
+	if len(comments) != 0 {
+		t.Fatalf("comments after post delete = %d, want 0", len(comments))
 	}
 
 	var updated models.User
@@ -85,7 +97,7 @@ func TestGetUserPostRank(t *testing.T) {
 		t.Fatalf("open sqlite: %v", err)
 	}
 
-	if err := db.AutoMigrate(&models.User{}, &models.Post{}); err != nil {
+	if err := db.AutoMigrate(&models.User{}, &models.Post{}, &models.Comment{}); err != nil {
 		t.Fatalf("migrate tables: %v", err)
 	}
 
