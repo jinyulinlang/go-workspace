@@ -47,3 +47,12 @@ temp/
 .AppleDouble
 .LSOverride
 .idea/
+
+# Solidity dependencies and generated files
+**/node_modules/
+**/cache/
+**/out/
+**/artifacts/
+**/coverage/
+**/broadcast/
+**/lib/
