@@ -189,14 +189,14 @@ contract Voting {
      * 将两个有序数组合并为一个有序数组。
      */
     function mergeArray(
-        bytes memory a,
-        bytes memory b
-    ) external pure returns (bytes memory) {
+        uint256[] memory a,
+        uint256[] memory b
+    ) external pure returns (uint256[] memory) {
         uint256 alength = a.length;
         uint256 blength = b.length;
         uint256 length = alength + blength;
 
-        bytes memory result = new bytes(length);
+        uint256[] memory result = new uint256[](length);
         for (uint256 i = 0; i < alength; i++) {
             result[i] = a[i];
         }
@@ -209,8 +209,8 @@ contract Voting {
      * 在一个有序数组中查找目标值。
      */
     function searchBinary(
-        bytes memory a,
-        bytes1 target
+        uint256[] memory a,
+        uint256 target
     ) external pure returns (int256) {
         uint256 alength = a.length;
         // 使用二分查找

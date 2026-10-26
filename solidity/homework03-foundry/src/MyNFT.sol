@@ -9,8 +9,10 @@ contract MyNFT is ERC721, Ownable {
 
     /// MyNFT 的构造函数
     constructor(
-        address initalOwner
-    ) ERC721("MyNFT", "NFT") Ownable(initalOwner) {}
+        address initalOwner,
+        string memory name_,
+        string memory symbol_
+    ) ERC721(name_, symbol_) Ownable(initalOwner) {}
 
     /// 支持 NFT 的铸造和转移(ERC721 本身支持 转移 )。
     function mint(address to) public onlyOwner {

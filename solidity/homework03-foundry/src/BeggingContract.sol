@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 contract BeggingContract {
     /// 一个 mapping 来记录每个捐赠者的捐赠金额。
     mapping(address => uint256) public contributers;
-    event Contributed(address contributer, uint256 amount);
+    event Contributed(address indexed contributer, uint256 amount);
     uint256 private totalBalance;
     address private immutable owner;
     constructor() {
