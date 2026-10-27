@@ -36,11 +36,14 @@ contract BeggingContractTest is Test {
         beggingContract.donate{value: 0.1 ether}();
     }
 
+    // 接受以太币
+    receive() external payable {}
     function test_WithDrawn() public {
         vm.prank(donor);
         beggingContract.donate{value: 0.2 ether}();
         vm.prank(address(this));
         // 讨饭合约取出 0.2 ether
+
         beggingContract.withdraw();
         // 讨饭合约的余额应该是 0
         assertEq(address(beggingContract).balance, 0);

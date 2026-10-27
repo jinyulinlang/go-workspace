@@ -59,8 +59,8 @@ contract NFTAuction is ReentrancyGuard {
 
     /// 创建拍卖:卖家需要先approve 本合约操作其NFT
     function createAuction(
-        address nftContract, // 拍卖的NFT合约
-        uint256 tokenId, // 拍卖的NFT的ID
+        address nftContract, // 被拍卖的 NFT 合约地址
+        uint256 tokenId, // 该 NFT 的 token ID
         address paymentToken, // 拍卖的支付币种
         uint256 startPrice, // 拍卖的起始价格
         uint256 duration // 拍卖的持续时间
@@ -207,6 +207,7 @@ contract NFTAuction is ReentrancyGuard {
         uint256 amount = peddingReturns[msg.sender][tokenId];
         require(amount > 0, "Nothing to withdrawn");
         peddingReturns[msg.sender][tokenId] = 0;
+        
         // 校验  token的币种
         if (tokenId != address(0)) {
             IERC20(tokenId).safeTransfer(msg.sender, amount);

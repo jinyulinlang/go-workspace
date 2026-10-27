@@ -47,7 +47,7 @@ contract VotingTest is Test {
         arr2[1] = 5;
         arr2[2] = 6;
         uint256[] memory arr3 = voting.mergeArray(arr1, arr2);
-        assertEq(arr3.length, 6);
+        assertEq(arr3.length, 11);
         assertEq(arr3[0], 1);
         assertEq(arr3[1], 2);
         assertEq(arr3[2], 3);

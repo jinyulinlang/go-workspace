@@ -81,8 +81,8 @@ contract Voting {
         // 声明一个反转的字节数组
         bytes memory revertBts = new bytes(length);
         uint256 index = 0;
-        for (uint256 i = length - 1; i >= 0; i--) {
-            revertBts[index] = bts[i];
+        for (uint256 i = length; i > 0; i--) {
+            revertBts[index] = bts[i - 1];
             index++;
         }
         return string(revertBts);
@@ -96,8 +96,8 @@ contract Voting {
         uint256 maxSeen = 0;
         bytes memory bts = bytes(value);
         uint256 length = bts.length;
-        for (uint256 i = length - 1; i >= 0; i--) {
-            uint256 cur = _romanMatchInt(bts[i]);
+        for (uint256 i = length; i > 0; i--) {
+            uint256 cur = _romanMatchInt(bts[i - 1]);
             if (cur < maxSeen) {
                 sum -= cur;
             } else {
@@ -171,6 +171,17 @@ contract Voting {
         }
         return string(_slice(buffer, index));
     }
+
+    function _slice_uint(
+        uint256[] memory arr,
+        uint256 length
+    ) private pure returns (uint256[] memory data) {
+        uint256[] memory result = new uint256[](length);
+        for (uint256 i = 0; i < length; i++) {
+            result[i] = arr[i];
+        }
+        data = result;
+    }
     /**
 
      */
@@ -197,13 +208,16 @@ contract Voting {
         uint256 length = alength + blength;
 
         uint256[] memory result = new uint256[](length);
+        uint256 index = 0;
         for (uint256 i = 0; i < alength; i++) {
             result[i] = a[i];
+            index++;
         }
         for (uint256 i = 0; i < blength; i++) {
             result[i + alength] = b[i];
+            index++;
         }
-        return result;
+        return _slice_uint(result, index);
     }
     /**
      * 在一个有序数组中查找目标值。
