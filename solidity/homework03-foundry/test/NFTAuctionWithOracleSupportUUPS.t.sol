@@ -123,7 +123,7 @@ contract NFTAuctionWithOracleSupportUUPSTest is Test {
         auction.setPriceFeed(address(paymentToken), feedAddress);
     }
 
-    function test_GetBidValueReturnsZeroForUnknownAuction() public {
+    function test_GetBidValueReturnsZeroForUnknownAuction() public view {
         assertEq(auction.getBidValueInUSD(123), 0);
     }
 
@@ -146,7 +146,7 @@ contract NFTAuctionWithOracleSupportUUPSTest is Test {
         vm.expectRevert(bytes("Auction does not exist"));
         vm.prank(bidder);
         auction.bid(999, 2 ether);
-        
+
         vm.deal(seller, 2 ether);
         vm.expectRevert(bytes("Seller cannot bid"));
         vm.prank(seller);
