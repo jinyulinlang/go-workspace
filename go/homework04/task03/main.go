@@ -95,6 +95,7 @@ func main() {
 	contactAddress := flag.String("address", "", "Counter contract address (if already deployed)")
 	flag.Parse()
 	// 如果 deploye是false,那么contactAddress就是合约地址 且不能为空
+
 	if !*isDeployeContract && *contactAddress == "" {
 		log.Fatal("Please provide a valid contract address or set deploy flag to true")
 	}
