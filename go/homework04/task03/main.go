@@ -10,8 +10,6 @@ import (
 	"task03/counter"
 	"time"
 
-	"crypto/ecdsa"
-
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -40,7 +38,6 @@ func deployCounterContract(
 	client *ethclient.Client,
 	ctx context.Context,
 	auth *bind.TransactOpts,
-	privateKeyECDSA *ecdsa.PrivateKey,
 ) (common.Address, *types.Transaction, error) {
 
 	address, tx, _, err := counter.DeployCounter(auth, client)
@@ -75,7 +72,8 @@ func deployCounterContract(
 }
 
 /*
-export	ETH_RPC_URL=https://sepolia.infura.io/v3/xxx
+export	ETH_RPC_URL=https://sepolia.infura.io/v3/xxxx
+
 export ETH_PRIVATE_KEY=0xb775c9f30058336e0511cc09d4cae5e6xxx
 */
 func main() {
@@ -129,7 +127,7 @@ func main() {
 	auth.GasPrice = gasPrice
 	if *isDeployeContract {
 		// 部署计数器合约
-		address, tx, err := deployCounterContract(client, ctx, auth, privateKeyECDSA)
+		address, tx, err := deployCounterContract(client, ctx, auth)
 		if err != nil {
 			log.Fatalf("Failed to deploy counter contract: %v", err)
 		}
