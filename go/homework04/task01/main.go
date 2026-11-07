@@ -24,8 +24,7 @@ import (
 输出查询结果到控制台。
 发送交易
 
-
-	export ETH_RPC_URL="https://sepolia.infura.io/v3/f15b139378d94492bd52d609b463c58c"
+	export ETH_RPC_URL="https://sepolia.infura.io/v3/f15b139378d94492bd52d609c"
 */
 func main() {
 	// 获取环境变量中的 ETH_RPC_URL

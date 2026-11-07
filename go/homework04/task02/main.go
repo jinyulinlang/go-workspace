@@ -24,8 +24,8 @@ import (
 对交易进行签名，并将签名后的交易发送到网络。
 输出交易的哈希值。
 
-	export ETH_RPC_URL="https://sepolia.infura.io/v3/f15b139378d94492bd52d609b463c58c"
-	export ETH_PRIVATE_KEY="0xb775c9f30058336e0511cc09d4cae5e6c1b455b9c498a2ab2c9decc1549a92d9"
+	export ETH_RPC_URL="https://sepolia.infura.io/v3/f15b139378d94492bd52d609b463c"
+	export ETH_PRIVATE_KEY="0xb775c9f30058336e0511cc09d4cae5e6c1b455b9c498a2ab2c9decc"
 */
 func main() {
 	toAddressHex := flag.String("to", "", "recipient address")
