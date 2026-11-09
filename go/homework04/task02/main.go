@@ -83,8 +83,21 @@ func sendEth(ctx context.Context, client *ethclient.Client, privateKeyHex, toAdd
 	}
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
 
+	// 判断 toAddressHex 是否是有效的以太坊地址
+	if !common.IsHexAddress(toAddressHex) {
+		log.Fatalf("Invalid recipient address: %s", toAddressHex)
+	}
+
 	// 解析接收方地址
 	toAddress := common.HexToAddress(toAddressHex)
+	// 判断是否是eoa账户
+	isEOA, err := isEOA(ctx, client, toAddress)
+	if err != nil {
+		log.Fatalf("Failed to check if address is EOA: %v", err)
+	}
+	if !isEOA {
+		log.Fatalf("Recipient address %s is not an EOA account", toAddressHex)
+	}
 	// 获取chainID
 	chainID, err := client.ChainID(ctx)
 	if err != nil {
@@ -97,7 +110,7 @@ func sendEth(ctx context.Context, client *ethclient.Client, privateKeyHex, toAdd
 	}
 	// 将以太币金额转换为wei
 	value := big.NewInt(int64(amountEth * 1e18)) // 1 ETH = 10^18 wei
-
+	// 设置 gasLimit, 纯外部账户转账 不需要通过estimateGas 获取
 	gasLimit := uint64(21000)
 	// 获取当前的gas价格
 	gasPriceGap, err := client.SuggestGasTipCap(ctx)
@@ -152,4 +165,14 @@ func trim0x(s string) string {
 		return s[2:]
 	}
 	return s
+}
+
+func isEOA(ctx context.Context, client *ethclient.Client, address common.Address) (bool, error) {
+	// 获取账户的代码
+	code, err := client.CodeAt(ctx, address, nil)
+	if err != nil {
+		return false, err
+	}
+	// 如果代码长度为0，则是EOA账户，否则是合约账户
+	return len(code) == 0, nil
 }
