@@ -1,0 +1,26 @@
+{
+  "lib/openzeppelin-contracts": {
+    "tag": {
+      "name": "v5.7.0",
+      "rev": "cab19933c33c2ad1d4c7a84864a3601dddfd16f3"
+    }
+  },
+  "lib/openzeppelin-contracts-upgradeable": {
+    "tag": {
+      "name": "v5.7.0",
+      "rev": "14f52c54d3a1eefbda3d4071efba24d3c1e07e8a"
+    }
+  },
+  "solidity/foundry-demo/lib/openzeppelin-contracts": {
+    "rev": "cab19933c33c2ad1d4c7a84864a3601dddfd16f3"
+  },
+  "solidity/homework03-foundry/lib/chainlink-evm": {
+    "rev": "793106cd598da8b2762958880300787b0b361fa1"
+  },
+  "solidity/homework03-foundry/lib/openzeppelin-contracts": {
+    "rev": "cab19933c33c2ad1d4c7a84864a3601dddfd16f3"
+  },
+  "solidity/homework03-foundry/lib/openzeppelin-contracts-upgradeable": {
+    "rev": "14f52c54d3a1eefbda3d4071efba24d3c1e07e8a"
+  }
+}

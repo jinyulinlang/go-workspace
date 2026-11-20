@@ -84,13 +84,13 @@ contract MetaNodeStake is
     //******************* EVENTS *******************
     event SetMetaNode(IERC20 indexed MetaNode);
 
-    event PauseEithdraw();
+    event PauseWithdraw();
 
-    event UnpausedWithdraw();
+    event UnpauseWithdraw();
 
     event PauseClaim();
 
-    event UnpausedClaim();
+    event UnpauseClaim();
 
     event SetStartBlock(uint256 indexed startBlock);
 
@@ -130,9 +130,9 @@ contract MetaNodeStake is
         uint256 amount
     );
 
-    event WithDraw(
+    event Withdraw(
         address indexed user,
-        int256 indexed poolId,
+        uint256 indexed poolId,
         uint256 amount,
         uint256 indexed blockNumber
     );
@@ -154,14 +154,14 @@ contract MetaNodeStake is
         require(!withdrawPaused, "withdraw paused");
         _;
     }
-    function innitialize(
+    function initialize(
         IERC20 _MetaNode,
         uint256 _startBlock,
         uint256 _endBlock,
         uint256 _MetaNodePerBlock
     ) public initializer {
         require(
-            _startBlock < _endBlock && _MetaNodePerBlock > 0,
+            _startBlock <= _endBlock && _MetaNodePerBlock > 0,
             "invalid params"
         );
         __AccessControl_init();
@@ -183,16 +183,24 @@ contract MetaNodeStake is
         MetaNode = _MetaNode;
         emit SetMetaNode(MetaNode);
     }
+    function pause() public onlyRole(ADMIN_ROLE) {
+        _pause();
+    }
+
+    function unpause() public onlyRole(ADMIN_ROLE) {
+        _unpause();
+    }
+
     function pauseWithdraw() public onlyRole(ADMIN_ROLE) {
         require(!withdrawPaused, "withdraw paused");
         withdrawPaused = true;
-        emit PauseEithdraw();
+        emit PauseWithdraw();
     }
 
     function unpauseWithdraw() public onlyRole(ADMIN_ROLE) {
         require(withdrawPaused, "withdraw not paused");
         withdrawPaused = false;
-        emit UnpausedWithdraw();
+        emit UnpauseWithdraw();
     }
 
     function pauseClaim() public onlyRole(ADMIN_ROLE) {
@@ -204,17 +212,18 @@ contract MetaNodeStake is
     function unpauseClaim() public onlyRole(ADMIN_ROLE) {
         require(claimPaused, "claim not paused");
         claimPaused = false;
-        emit UnpausedClaim();
+        emit UnpauseClaim();
     }
 
     function setStartBlock(uint256 _startBlock) public onlyRole(ADMIN_ROLE) {
-        require(_startBlock < endBlock, "invalid start block");
+        require(_startBlock <= endBlock, "invalid start block");
         startBlock = _startBlock;
         emit SetStartBlock(startBlock);
     }
     function setEndBlock(uint256 _endBlock) public onlyRole(ADMIN_ROLE) {
-        require(startBlock < _endBlock, "invalid end block");
+        require(startBlock <= _endBlock, "invalid end block");
         endBlock = _endBlock;
+        emit SetEndBlock(_endBlock);
     }
     function setMetaNodePerBlock(
         uint256 _MetaNodePerBlock
@@ -457,13 +466,12 @@ contract MetaNodeStake is
                 accMetaNodePerST +
                 (MetaNodeForPool * (1 ether)) /
                 stSupply;
-
-            return
-                (user_.stAmount * accMetaNodePerST) /
-                (1 ether) -
-                user_.finishedMetaNode +
-                user_.pendingMetaNode;
         }
+        return
+            (user_.stAmount * accMetaNodePerST) /
+            (1 ether) -
+            user_.finishedMetaNode +
+            user_.pendingMetaNode;
     }
 
     function stakingBalance(
@@ -491,5 +499,110 @@ contract MetaNodeStake is
             requestAmount = requestAmount + user_.requests[i].amount;
         }
     }
-    // **************************888
+
+    function deposit(
+        uint256 _pid,
+        uint256 _amount
+    ) public whenNotPaused checkPid(_pid) {
+        require(_pid != 0, "deposit not support ETH staking");
+        Pool storage pool_ = pools[_pid];
+        require(
+            _amount > pool_.minDepositAmount,
+            "deposit amount is too small"
+        );
+        if (_amount > 0) {
+            IERC20(pool_.stTokenAddress).safeTransferFrom(
+                msg.sender,
+                address(this),
+                _amount
+            );
+        }
+        _deposit(_pid, _amount);
+    }
+
+    function unstake(
+        uint256 _pid,
+        uint256 _amount
+    ) public whenNotPaused checkPid(_pid) whenNotWithdrawPaused {
+        Pool storage pool_ = pools[_pid];
+        User storage user_ = user[_pid][msg.sender];
+
+        require(user_.stAmount >= _amount, "Not enough staking tokein balance");
+        updatePool(_pid);
+        uint256 pendingMetaNode_ = (user_.stAmount * pool_.accMetaNodePerST) /
+            (1 ether) -
+            user_.finishedMetaNode;
+
+        if (pendingMetaNode_ > 0) {
+            user_.pendingMetaNode = user_.pendingMetaNode + pendingMetaNode_;
+        }
+        if (_amount > 0) {
+            user_.stAmount = user_.stAmount - _amount;
+            user_.requests.push(
+                UnstakeRequest({
+                    amount: _amount,
+                    unlockBlocks: block.number + pool_.unstakeLockedBlocks
+                })
+            );
+        }
+
+        pool_.stTokenAmount = pool_.stTokenAmount - _amount;
+        user_.finishedMetaNode =
+            (user_.stAmount * pool_.accMetaNodePerST) /
+            (1 ether);
+        emit RequestUnstake(msg.sender, _pid, _amount);
+    }
+
+    function withdraw(
+        uint256 _pid
+    ) public whenNotPaused checkPid(_pid) whenNotWithdrawPaused {
+        Pool storage pool_ = pools[_pid];
+        User storage user_ = user[_pid][msg.sender];
+        uint256 pendingWithdraw_;
+        uint256 popNum_;
+        for (uint i = 0; i < user_.requests.length; i++) {
+            if (user_.requests[i].unlockBlocks > block.number) {
+                break;
+            }
+            pendingWithdraw_ = pendingWithdraw_ + user_.requests[i].amount;
+            popNum_++;
+        }
+        for (uint i = 0; i < user_.requests.length - popNum_; i++) {
+            user_.requests[i] = user_.requests[i + popNum_];
+        }
+        for (uint i = 0; i < popNum_; i++) {
+            user_.requests.pop();
+        }
+        if (pendingWithdraw_ > 0) {
+            if (pool_.stTokenAddress == address(0x0)) {
+                _safeETHTransfer(msg.sender, pendingWithdraw_);
+            } else {
+                IERC20(pool_.stTokenAddress).safeTransfer(
+                    msg.sender,
+                    pendingWithdraw_
+                );
+            }
+        }
+        emit Withdraw(msg.sender, _pid, pendingWithdraw_, block.number);
+    }
+
+    function claim(
+        uint256 _pid
+    ) public whenNotPaused checkPid(_pid) whenNotClaimPaused {
+        Pool storage pool_ = pools[_pid];
+        User storage user_ = user[_pid][msg.sender];
+        updatePool(_pid);
+        uint256 pendingMetaNode_ = (user_.stAmount * pool_.accMetaNodePerST) /
+            (1 ether) -
+            user_.finishedMetaNode +
+            user_.pendingMetaNode;
+        if (pendingMetaNode_ > 0) {
+            user_.pendingMetaNode = 0;
+            _safeMetaNodeTransfer(msg.sender, pendingMetaNode_);
+        }
+        user_.finishedMetaNode =
+            (user_.stAmount * pool_.accMetaNodePerST) /
+            (1 ether);
+        emit Claim(msg.sender, _pid, pendingMetaNode_);
+    }
 }
